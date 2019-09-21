@@ -1,0 +1,670 @@
+---
+title: "R语言使用随机森林预测房价走势"
+author: "hanmoumou"
+date: "2019/09/09"
+output: 
+  html_document: 
+    fig_caption: yes #fig_caption 控制是否使用标题呈现数字
+    highlight: haddock #highlight指定语法高亮样式
+    keep_md: yes #在渲染后保留Markdown文件的副本
+    number_sections: yes #number_sections选项将标题编号添加到标题
+    theme: united #theme指定用于页面的Bootstrap主题（主题来自Bootswatch主题库）
+    toc: yes #toc选项添加目录（TOC）
+    toc_depth: 6 #用该选项指定它应用的标题深度toc_depth，默认为3（意味着所有级别1,2和3标头将包含在目录中）
+    toc_float: #指定将toc_float目录浮动到主文档内容左侧的选项，即使滚动文档，浮动目录也始终可见
+      collapsed: false #collapsed（默认为TRUE）控制TOC是否仅显示顶级（例如H2）标题。如果最初崩溃，TOC会在必要时自动扩展内联
+      smooth_scroll: false #smooth_scroll（默认为TRUE）控制在通过鼠标单击导航到TOC项目时是否为页面滚动设置动画
+---
+
+使用随机森林建模，使用数据集中给定的特征预测房价。
+
+# 特征翻译（供参考）
+
+MSSubClass 建筑类 <br>
+MSZoning 城市总体规划分区 <br>
+LotFrontage 连接物业的街道线 <br>
+LotArea: Lot size in square feet 方块大小 <br>
+Street 道路入口类型 <br>
+Alley 巷类型 <br>
+LotShape 地产的外形 <br>
+LandContour 地产的扁平化 <br>
+Utilities 地产的公用事业类型 <br>
+LotConfig 地产配置 <br>
+LandSlope 地产的坡 <br>
+Neighborhood 城市范围内的物理位置 <br>
+Condition1 接近主干道或铁路 <br>
+Condition2 接近主路或铁路 <br>
+BldgType 住宅类型 <br>
+HouseStyle 居家风格 <br>
+OverallQual 整体质量和表面质量 <br>
+OverallCond 总体状态额定值 <br>
+YearBuilt 原施工日期 <br>
+YearRemodAdd 重塑日期 <br>
+RoofStyle 屋顶类型 <br>
+RoofMatl 屋顶材料 <br>
+Exterior1st 房屋外墙 <br>
+Exterior2nd 外部第二层：房屋外部覆盖物 <br>
+MasVnrType 圬工单板型 <br>
+MasVnrArea 砌体单板覆盖面积 <br>
+ExterQual: 外观材质 <br>
+ExterCond 外墙材料的现状 <br>
+Foundation 地基类型 <br>
+BsmtQual 地下室的高度 <br>
+BsmtCond 地下室概况 <br>
+BsmtExposure: 走道或花园式地下室墙 <br>
+BsmtFinType1 地下室竣工面积质量 <br>
+BsmtFinSF1 1型成品面积 <br>
+BsmtFinType2 第二成品区域的质量（如果存在） <br>
+BsmtFinSF2 2型成品面积 <br>
+BsmtUnfSF 地下室面积 <br>
+TotalBsmtSF 地下室面积总计面积 <br>
+Heating 暖气方式 <br>
+HeatingQC 暖气质量与条件 <br>
+CentralAir 空调 <br>
+Electrical 电气系统 <br>
+1stFlrSF 一楼面积 <br>
+2ndFlrSF 二楼面积 <br>
+LowQualFinSF 低质量完工面积（所有楼层）<br>
+GrLivArea 高档（地面）居住面积 <br>
+BsmtFullBath 地下室全浴室 <br>
+BsmtHalfBath 地下室半浴室 <br>
+FullBath 高档浴室 <br>
+HalfBath 半日以上洗澡浴室 <br>
+Bedroom 地下室层以上的卧室数 <br>
+Kitchen 厨房数量 <br>
+KitchenQual 厨房品质 <br>
+TotRmsAbvGrd 总房间（不包括浴室）<br>
+Functional 家庭功能评级 <br>
+Fireplaces 壁炉数 <br>
+FireplaceQu 壁炉质量 <br>
+GarageType 车库位置 <br>
+GarageYrBlt 车库建成年 <br>
+GarageFinish 车库的内饰 <br>
+GarageCars 车库容量大小 <br>
+GarageArea 车库大小 <br>
+GarageQual 车库质量 <br>
+GarageCond 车库状况 <br>
+PavedDrive 铺好的车道 <br>
+WoodDeckSF 木制甲板面积 <br>
+OpenPorchSF 外部走廊面积 <br>
+EnclosedPorch 闭走廊面积 <br>
+3SsnPorch: 三季走廊面积 <br>
+ScreenPorch 屏风走廊面积 <br>
+PoolArea 泳池面积 <br>
+PoolQC 泳池的质量 <br>
+Fence 围栏质量 <br>
+MiscFeature 其他类别的杂项特征 <br>
+MiscVal 杂项价值 <br>
+MoSold 月售出 <br>
+YrSold 年销售 <br>
+SaleType 销售类型 <br>
+SaleCondition 销售条件 <br>
+SalePrice 以美元出售的房产价格 <br>
+
+# 具体
+
+## 加载包
+
+```{r, message = FALSE}
+
+library('ggplot2')
+library('ggthemes') 
+library('scales')
+library('dplyr') 
+library('mice')
+library('randomForest') 
+library('data.table')
+library('gridExtra')
+library('corrplot') 
+library('GGally')
+library('e1071')
+```
+
+## 读入训练集和测试集
+
+```{r, message=FALSE, warning=FALSE}
+
+train <-read.csv('/Users/hanqianyun/Desktop/train.csv', stringsAsFactors = F)
+test  <-read.csv('/Users/hanqianyun/Desktop/test.csv', stringsAsFactors = F)
+
+## Structure of the data
+
+dim(train)
+str(train)
+dim(test)
+str(test)
+```
+
+训练集有1460行81个特征；测试集有1459行和80个特征。
+
+```{r, message=FALSE, warning=FALSE}
+#Count the number of columns that consists of text data
+
+sum(sapply(train[,1:81], typeof) == "character")
+
+#Count the number of columns that consists of numerical data
+
+sum(sapply(train[,1:81], typeof) == "integer")
+```
+
+字符串特征的列数43列，数值型特征的38列。
+
+```{r, message=FALSE, warning=FALSE}
+# Obtain summary statistics
+
+summary(train[,sapply(train[,1:81], typeof) == "integer"])
+
+
+cat('Train has', dim(train)[1], 'rows and', dim(train)[2], 'columns.')
+cat('Test has', dim(test)[1], 'rows and', dim(test)[2], ' columns.')
+
+# The percentage of data missing in train
+
+sum(is.na(train)) / (nrow(train) *ncol(train))
+
+# The percentage of data missing in test
+
+sum(is.na(test)) / (nrow(test) * ncol(test))
+
+# Check for duplicated rows
+
+cat("The number of duplicated rows are", nrow(train) - nrow(unique(train)))
+```
+
+## 合并数据集
+
+因为测试集没有“Saleprice”变量，需要创建它，然后合并。
+
+```{r, message=FALSE, warning=FALSE}
+test$SalePrice<-rep(NA,1459)
+house<-bind_rows(train,test)
+
+## Data Exploration
+
+str(house)
+summary(house)
+head(house)
+```
+
+## 数据可视化
+
+```{r, message=FALSE, warning=FALSE}
+cat_var <- names(train)[which(sapply(train, is.character))]
+cat_car <- c(cat_var, 'BedroomAbvGr', 'HalfBath', ' KitchenAbvGr','BsmtFullBath', 'BsmtHalfBath', 'MSSubClass')
+numeric_var <- names(train)[which(sapply(train, is.numeric))]
+
+
+## Creating one training dataset with categorical variable and one with numeric variable. We will use this for data visualization.
+
+train1_cat<-train[cat_var]
+train1_num<-train[numeric_var]
+
+## Bar plot/Density plot function
+
+## Bar plot function
+
+plotHist <- function(data_in, i) 
+{
+  data <- data.frame(x=data_in[[i]])
+  p <- ggplot(data=data, aes(x=factor(x))) + stat_count() + xlab(colnames(data_in)[i]) + theme_light() + 
+    theme(axis.text.x = element_text(angle = 90, hjust =1))
+  return (p)
+}
+
+## Density plot function
+
+plotDen <- function(data_in, i){
+  data <- data.frame(x=data_in[[i]], SalePrice = data_in$SalePrice)
+  p <- ggplot(data= data) + geom_line(aes(x = x), stat = 'density', size = 1,alpha = 1.0) +
+    xlab(paste0((colnames(data_in)[i]), '\n', 'Skewness: ',round(skewness(data_in[[i]], na.rm = TRUE), 2))) + theme_light() 
+  return(p)
+  
+}
+
+## Function to call both Bar plot and Density plot function
+
+doPlots <- function(data_in, fun, ii, ncol=3) 
+{
+  pp <- list()
+  for (i in ii) {
+    p <- fun(data_in=data_in, i=i)
+    pp <- c(pp, list(p))
+  }
+  do.call("grid.arrange", c(pp, ncol=ncol))
+}
+
+
+## Barplots for the categorical features
+
+doPlots(train1_cat, fun = plotHist, ii = 1:4, ncol = 2)
+doPlots(train1_cat, fun = plotHist, ii  = 5:8, ncol = 2)
+doPlots(train1_cat, fun = plotHist, ii = 9:12, ncol = 2)
+doPlots(train1_cat, fun = plotHist, ii = 13:18, ncol = 2)
+doPlots(train1_cat, fun = plotHist, ii = 19:22, ncol = 2)
+```
+
+Boxplot
+
+```{r, message=FALSE, warning=FALSE}
+ggplot(train, aes(x = Neighborhood, y = SalePrice)) +
+  geom_boxplot() +
+  geom_hline(aes(yintercept=80), 
+             colour='red', linetype='dashed', lwd=2) +
+  scale_y_continuous(labels=dollar_format()) +
+  theme_few()
+```
+
+结论:小区与销售价格之间的箱线图显示，BrkSide和OldTown以及SWISU地区附近有便宜的房子，而NridgHt和NoRidge有几个高价异常值。
+
+数值变量的密度图
+
+```{r, message=FALSE, warning=FALSE}
+doPlots(train1_num, fun = plotDen, ii = 2:6, ncol = 2)
+doPlots(train1_num, fun = plotDen, ii = 7:12, ncol = 2)
+doPlots(train1_num, fun = plotDen, ii = 13:17, ncol = 2)
+```
+
+结论:上面的密度图可以看出所有的特征偏度均不为零。从YearBuilt的密度图上可以看到，这次的统计数据中新老房子都有，这可能预示着由于住房危机，近年来房屋数量有所下降。
+解释：Yearbuilt 整体左偏，说明大部分数据集中在左边（年代较早的房子），而年代较近的新房少。
+
+少数数值变量的直方图
+
+```{r, message=FALSE, warning=FALSE}
+doPlots(train1_num, fun = plotHist, ii = 18:23, ncol = 2)
+```
+
+结论: 下面的柱状图显示，大多数房子有2个全浴室，0个半浴室，平均有3个卧室。
+
+探索相关性
+
+```{r, message=FALSE, warning=FALSE}
+correlations <- cor(na.omit(train1_num[,-1]))
+```
+
+相关性
+
+```{r, message=FALSE, warning=FALSE}
+row_indic <- apply(correlations, 1, function(x) sum(x > 0.3 | x < -0.3) > 1)
+correlations<- correlations[row_indic ,row_indic ]
+corrplot(correlations, method="square")
+```
+
+
+## 缺失值
+
+```{r, message=FALSE, warning=FALSE}
+# Looking at the distribution and summary of the target variable
+
+summary(train$SalePrice)
+
+quantile(train$SalePrice)
+
+# Conclusion: From summary, it was observed that minimum price is greater than 0
+
+## Histogram for target variable
+
+hist(train$SalePrice)
+
+## Conclusion: From Histogram, we could see that it deviates from normal distribution and has positive skewness.
+
+
+# Plotting 'GrLivArea' too see if there are any outliers
+
+ggplot(train,aes(y=SalePrice,x=GrLivArea))+geom_point()
+summary(train$GrLivArea)
+
+# There are outliers in 'GrLivArea' field. Let's remove those outliers.
+
+train <- train[train$GrLivArea<=4000,]
+```
+
+```{r, message=FALSE, warning=FALSE}
+## To find number of missing value for all variable in train dataset
+
+colSums(sapply(train, is.na))
+
+## To find number of missing value for all variable in combined dataset (Train+Test)
+
+sapply(house[,1:80], function(x) sum(is.na(x)))
+
+## Taking all the missing data indices in one variables
+
+Missing_indices <- sapply(train,function(x) sum(is.na(x)))
+Missing_Summary <- data.frame(index = names(train),Missing_Values=Missing_indices)
+Missing_Summary[Missing_Summary$Missing_Values > 0,]
+```
+
+合并训练集和测试集
+
+```{r, message=FALSE, warning=FALSE}
+test$SalePrice <- NA
+train$isTrain <- 1
+test$isTrain <- 0
+house <- rbind(train,test)
+```
+
+## MasVnrArea砌体单板覆盖面积
+
+```{r, message=FALSE, warning=FALSE}
+house$MasVnrArea[which(is.na(house$MasVnrArea))] <- mean(house$MasVnrArea,na.rm=T)
+```
+
+
+## Alley巷类型
+
+把Alley里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$Alley1 <- as.character(house$Alley)
+house$Alley1[which(is.na(house$Alley))] <- "None"
+table(house$Alley1)
+house$Alley <- as.factor(house$Alley1)
+house <- subset(house,select = -Alley1)
+```
+
+## MasVnrType圬工单板型
+
+把MasVnrType里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$MasVnrType1 <- as.character(house$MasVnrType)
+house$MasVnrType1[which(is.na(house$MasVnrType))] <- "None"
+house$MasVnrType <- as.factor(house$MasVnrType1)
+house <- subset(house,select = -MasVnrType1)
+table(house$MasVnrType)
+```
+
+## LotFrontage连接物业的街道线
+
+用均值填补
+
+```{r, message=FALSE, warning=FALSE}
+house$LotFrontage[which(is.na(house$LotFrontage))] <- median(house$LotFrontage,na.rm = T)
+```
+
+## FireplaceQu壁炉质量
+
+把FireplaceQu里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$FireplaceQu1 <- as.character(house$FireplaceQu)
+house$FireplaceQu1[which(is.na(house$FireplaceQu))] <- "None"
+house$FireplaceQu <- as.factor(house$FireplaceQu1)
+house <- subset(house,select = -FireplaceQu1)
+```
+
+## PoolQC泳池质量
+
+把PoolQC里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$PoolQC1 <- as.character(house$PoolQC)
+house$PoolQC1[which(is.na(house$PoolQC))] <- "None"
+house$PoolQC <- as.factor(house$PoolQC1)
+house <- subset(house,select = -PoolQC1)
+```
+
+## Fence围栏质量
+
+把Fence里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$Fence1 <- as.character(house$Fence)
+house$Fence1[which(is.na(house$Fence))] <- "None"
+house$Fence <- as.factor(house$Fence1)
+house <- subset(house,select = -Fence1)
+```
+
+## MiscFeature其他类别的杂项特征
+
+把MiscFeature里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$MiscFeature1 <- as.character(house$MiscFeature)
+house$MiscFeature1[which(is.na(house$MiscFeature))] <- "None"
+house$MiscFeature <- as.factor(house$MiscFeature1)
+house <- subset(house,select = -MiscFeature1)
+```
+
+## GarageType车库位置
+
+把GarageType里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$GarageType1 <- as.character(house$GarageType)
+house$GarageType1[which(is.na(house$GarageType))] <- "None"
+house$GarageType <- as.factor(house$GarageType1)
+house <- subset(house,select = -GarageType1)
+```
+
+## GarageYrBlt车库建成年
+
+把GarageYrBlt里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$GarageYrBlt[which(is.na(house$GarageYrBlt))] <- 0 
+```
+
+## GarageFinish车库的内饰
+
+把GarageFinish里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$GarageFinish1 <- as.character(house$GarageFinish)
+house$GarageFinish1[which(is.na(house$GarageFinish))] <- "None"
+house$GarageFinish <- as.factor(house$GarageFinish1)
+house <- subset(house,select = -GarageFinish1)
+```
+
+## GarageQual车库质量
+
+把GarageQual里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$GarageQual1 <- as.character(house$GarageQual)
+house$GarageQual1[which(is.na(house$GarageQual))] <- "None"
+house$GarageQual <- as.factor(house$GarageQual1)
+house <- subset(house,select = -GarageQual1)
+```
+
+## GarageCond车库状况
+
+把GarageCond里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$GarageCond1 <- as.character(house$GarageCond)
+house$GarageCond1[which(is.na(house$GarageCond))] <- "None"
+house$GarageCond <- as.factor(house$GarageCond1)
+house <- subset(house,select = -GarageCond1)
+```
+
+## BsmtQual地下室的高度
+
+把BsmtQual里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$BsmtQual1 <- as.character(house$BsmtQual)
+house$BsmtQual1[which(is.na(house$BsmtQual))] <- "None"
+house$BsmtQual <- as.factor(house$BsmtQual1)
+house <- subset(house,select = -BsmtQual1)
+```
+
+## BsmtCond地下室概况
+
+把BsmtCond里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$BsmtCond1 <- as.character(house$BsmtCond)
+house$BsmtCond1[which(is.na(house$BsmtCond))] <- "None"
+house$BsmtCond <- as.factor(house$BsmtCond1)
+house <- subset(house,select = -BsmtCond1)
+```
+
+## BsmtExposure走道或花园式地下室墙
+
+把BsmtExposure里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$BsmtExposure1 <- as.character(house$BsmtExposure)
+house$BsmtExposure1[which(is.na(house$BsmtExposure))] <- "None"
+house$BsmtExposure <- as.factor(house$BsmtExposure1)
+house <- subset(house,select = -BsmtExposure1)
+```
+
+## BsmtFinType1地下室竣工面积质量
+
+把BsmtFinType1里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$BsmtFinType11 <- as.character(house$BsmtFinType1)
+house$BsmtFinType11[which(is.na(house$BsmtFinType1))] <- "None"
+house$BsmtFinType1 <- as.factor(house$BsmtFinType11)
+house <- subset(house,select = -BsmtFinType11)
+```
+
+## BsmtFinType2第二成品区域的质量（如果存在）
+
+把BsmtFinType2里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$BsmtFinType21 <- as.character(house$BsmtFinType2)
+house$BsmtFinType21[which(is.na(house$BsmtFinType2))] <- "None"
+house$BsmtFinType2 <- as.factor(house$BsmtFinType21)
+house <- subset(house,select = -BsmtFinType21)
+```
+
+## Electrical电气系统
+
+把Electrical里的NA改为None
+
+```{r, message=FALSE, warning=FALSE}
+house$Electrical1 <- as.character(house$Electrical)
+house$Electrical1[which(is.na(house$Electrical))] <- "None"
+house$Electrical <- as.factor(house$Electrical1)
+house <- subset(house,select = -Electrical1)
+```
+
+## 因子化
+
+```{r, message=FALSE, warning=FALSE}
+house$MSZoning<- factor(house$MSZoning)
+house$Street <- factor(house$Street)
+house$LotShape <-factor(house$LotShape )
+house$LandContour<-factor(house$LandContour)
+house$Utilities<-factor(house$Utilities)
+house$LotConfig<-factor(house$LotConfig)
+house$LandSlope<-factor(house$LandSlope)
+house$Neighborhood<-factor(house$Neighborhood)
+house$Condition1<-factor(house$Condition1)
+house$Condition2<-factor(house$Condition2)
+house$BldgType<-factor(house$BldgType)
+house$HouseStyle<-factor(house$HouseStyle)
+house$RoofStyle<-factor(house$RoofStyle)
+house$RoofMatl<-factor(house$RoofMatl)
+house$Exterior1st<-factor(house$Exterior1st)
+house$Exterior2nd<-factor(house$Exterior2nd)
+house$ExterQual<-factor(house$ExterQual)
+house$ExterCond<-factor(house$ExterCond)
+house$Foundation<-factor(house$Foundation)
+house$Heating<-factor(house$Heating)
+house$HeatingQC<-factor(house$HeatingQC)
+house$CentralAir<-factor(house$CentralAir)
+house$KitchenQual<-factor(house$KitchenQual)
+house$Functional<-factor(house$Functional)
+house$PavedDrive<-factor(house$PavedDrive)
+house$SaleType<-factor(house$SaleType)
+house$SaleCondition<-factor(house$SaleCondition)
+str(house)
+```
+
+将所有列类放在一个变量中，以便从数值型变量中分离出因子。
+
+```{r, message=FALSE, warning=FALSE}
+Column_classes <- sapply(names(house),function(x){class(house[[x]])})
+numeric_columns <-names(Column_classes[Column_classes != "factor"])
+
+#determining skew of each numeric variable
+
+skew <- sapply(numeric_columns,function(x){skewness(house[[x]],na.rm = T)})
+
+# Let us determine a threshold skewness and transform all variables above the treshold.
+
+skew <- skew[skew > 0.75]
+
+# transform excessively skewed features with log(x + 1)
+
+for(x in names(skew)) 
+{
+  house[[x]] <- log(house[[x]] + 1)
+}
+```
+
+
+训练集和测试集创建
+
+```{r, message=FALSE, warning=FALSE}
+train <- house[house$isTrain==1,]
+test <- house[house$isTrain==0,]
+smp_size <- floor(0.75 * nrow(train))
+
+## setting the seed to make the partition reproducible
+
+set.seed(123)
+train_ind <- sample(seq_len(nrow(train)), size = smp_size)
+
+train_new <- train[train_ind, ]
+validate <- train[-train_ind, ]
+train_new <- subset(train_new,select=-c(Id,isTrain))
+validate <- subset(validate,select=-c(Id,isTrain))
+nrow(train_new)
+nrow(validate)
+str(validate)
+```
+
+## 建模
+
+```{r, message=FALSE, warning=FALSE}
+library(randomForest)
+house_model <- randomForest(SalePrice~.,
+                            data = train_new)
+```
+
+## 变量重要性
+
+Get importance
+
+```{r, message=FALSE, warning=FALSE}
+importance    <- importance(house_model)
+varImpPlot(house_model)
+```
+
+## 最终预测
+
+```{r, message=FALSE, warning=FALSE}
+# Predict using the test set
+
+prediction <- predict(house_model,test)
+
+# Evaluation RMSE function
+
+RMSE <- function(x,y){
+  a <- sqrt(sum((log(x)-log(y))^2)/length(y))
+  return(a)
+}
+```
+
+RMSE
+
+```{r, message=FALSE, warning=FALSE}
+RMSE1 <- RMSE(prediction, validate$SalePrice)
+RMSE1
+RMSE1 <- round(RMSE1, digits = 5)
+```
+
+Output file
+
+```{r, message=FALSE, warning=FALSE}
+prediction[which(is.na(prediction))] <- mean(prediction,na.rm=T)
+submit <- data.frame(Id=test$Id,SalePrice=prediction)
+write.csv(submit,file="/Users/hanqianyun/Desktop/House_Price_Pradeep.csv",row.names=F)
+```
