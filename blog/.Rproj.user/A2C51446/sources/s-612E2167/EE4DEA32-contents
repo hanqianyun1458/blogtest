@@ -1,0 +1,142 @@
+
+```{r, message = FALSE}
+
+library('ggplot2')
+library('ggthemes') 
+library('scales')
+library('dplyr') 
+library('mice')
+library('randomForest') 
+library('data.table')
+library('gridExtra')
+library('corrplot') 
+library('GGally')
+library('e1071')
+library("VIM")
+```
+
+## 读入训练集和测试集
+
+```{r, message=FALSE, warning=FALSE}
+
+train <-read.csv('/Users/hanqianyun/Desktop/train.csv',stringsAsFactors = FALSE)
+test  <-read.csv('/Users/hanqianyun/Desktop/test.csv',stringsAsFactors = FALSE)
+
+## 数据结构
+
+dim(train)
+# str(train)
+dim(test)
+# str(test)
+
+#计算字符型数据的列数
+sum(sapply(train[,1:81], typeof) == "character")
+
+#计算数值型数据的列数
+sum(sapply(train[,1:81], typeof) == "integer")
+
+# 训练集缺失值占比
+sum(is.na(train)) / (nrow(train) *ncol(train))
+
+# 测试集缺失值占比
+sum(is.na(test)) / (nrow(test) * ncol(test))
+
+```
+
+
+## 合并数据集
+
+因为测试集没有“Saleprice”变量，需要创建它，然后合并。
+
+```{r, message=FALSE, warning=FALSE}
+test$SalePrice<-rep(NA,1459)
+house<-bind_rows(train,test)
+
+# 数据概览
+# str(house)
+# summary(house)
+# head(house)
+```
+
+## 处理训练集
+
+```{r, message=FALSE, warning=FALSE}
+# 有缺失值的列组成的数据框
+NAdata <- train[,which(colSums(is.na(train))>0)]
+
+# aagr()绘制缺失值的分布情况
+# numbers = FALSE（默认）删去数值型标签，TRUE则是保留数值型标签
+# sortVars = TRUE 
+aggr_plot <- aggr(NAdata, numbers = TRUE, sortVars = TRUE, labels = names(NAdata), cexgap = 3, ylab = c("Histogram of missing data", "Pattern"))
+
+```
+
+删除缺失值超过5%的特征，删除字面意思相似的特征，最后含有缺失值的特征只剩下LotFrontage、Electrical。因此，对整个数据中需要删除的特征进行处理。
+
+```{r, message=FALSE, warning=FALSE}
+# 把缺失值数据框NAdata的"LotFrontage", "Electrical"列删除,剩余的就是所有待删除的特征
+NAdata1 <- NAdata[, -which(colnames(NAdata)%in%c("LotFrontage", "Electrical"))] ## 17个（不包含LotFrontage, Electrical）缺失值变量
+
+# 找出train中有NAdata1的列的位置
+y <- which(colnames(train)%in%colnames(NAdata1))
+
+# 删除train中有NAdata1的列，得到新的有效数据，这里的train1只包含LotFrontage、Electrical两个含缺失值的特征了
+train1 <- train[,-y] ## 64个（包含无缺失值变量和LotFrontage, Electrical）变量
+
+```
+
+接下来分别对 Electrical，LotFrontage 进行处理。
+
+```{r, message=FALSE, warning=FALSE}
+# 1 处理Electrical 
+# Electrical仅含有一个缺失值，因此这里就多Electrical进行简单插补处理，取Eelectrial中的众数SBrkr来填补
+table(train1[,"Electrical"]) #有1334个SBrkr，因此SBrkr是众数
+train1[which(is.na(train1[,"Electrical"])), "Electrical"] <- c("SBrkr")
+
+```
+
+```{r, message=FALSE, warning=FALSE}
+# 2 处理LotFrontage
+imp <- mice(train1,m=5,method = "rf") #5重插补，即生成5个无缺失数据集
+fit <- with(imp,lm(SalePrice~LotFrontage)) #选择插补模型,with()函数可依次对每个完整数据集应用统计模型（如线性模型或广义线性模型）
+pooled <- pool(fit) #pool()函数将这些单独的分析结果整合为一组结果。最终模型的标准误和p值都将准确地反映出由于缺失值和多重插补而产生的不确定性
+summary(pooled)
+
+#这里对summary出来的参数值不是很明了，先暂且搁置
+train2 <- complete(imp,action = 3) #选择第三个插补数据集作为结果,得到一个没有缺失值的数据集train2
+summary(train2$LotFrontage)
+summary(train$LotFrontage)
+```
+
+选择第三个插补数据集作为结果,得到一个没有缺失值的数据集train2。
+
+## 合并数据集
+
+同样把测试集test只保留和train2一样的变量。
+
+```{r, message=FALSE, warning=FALSE}
+test <- test[, which(colnames(test)%in%names(train2))] ## 同样把测试集test只保留和train2一样的变量
+test$SalePrice <- NA
+train2$istrain <- 1
+test$istrain <- 0
+house <- rbind(train2,test)
+```
+
+将所有列类放在一个变量中，以便从数值型变量中分离出因子。
+
+```{r, message=FALSE, warning=FALSE}
+Column_classes <- sapply(names(house),function(x){class(house[[x]])})
+numeric_columns <-names(Column_classes[Column_classes != "factor"])
+
+# 确定每个数值型变量的偏度
+skew <- sapply(numeric_columns,function(x){skewness(house[[x]],na.rm = T)})
+
+# 让我们确定一个阈值偏度，并对阈值之上的所有变量进行转换
+skew <- skew[skew > 0.75]
+
+# 使用log(x + 1)转换过度倾斜的变量
+for(x in names(skew)) 
+{
+  house[[x]] <- log(house[[x]] + 1)
+}
+```
