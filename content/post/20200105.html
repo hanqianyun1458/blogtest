@@ -379,7 +379,8 @@ summary {
 <ul>
 <li>包 <code>carData</code> 中有一个叫 <code>Leinhardt</code> 的数据文件。该文件为105个国家（行数）在1970年代左右的数据。该文件共有4个变量（列数）：<code>income</code> 表示该国人均收入水平；<code>infant</code> 表示该国每1000个新生儿中的儿童死亡率；<code>region</code> 表示该国所属地区；<code>oil</code> 表示该国是否为石油输出国。</li>
 </ul>
-<pre><code>df1 &lt;- read.csv('/Users/hanqianyun//Desktop/df1.csv',header = T, fileEncoding = 'utf-8')</code></pre>
+<pre><code>library('carData') ## 载入carData
+df1 &lt;- Leinhardt ## 载入数据集</code></pre>
 </div>
 <div id="处理缺失值" class="section level3">
 <h3>处理缺失值</h3>
