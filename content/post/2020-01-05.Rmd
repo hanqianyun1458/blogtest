@@ -17,6 +17,12 @@ output:
   3. 将非正态转化为正态<br>
   4. 可视化散点图、回归线<br>
   
+  用到的包：<br>
+  1. 'carData' R自带数据集<br>
+  2. 'ggplot2' 可视化<br>
+  3. 'MASS' 进行box-cox转换<br>
+  4. ‘moments’ 进行偏度锋度计算<br>
+  
 # 实例
 
 ## 载入数据集
