@@ -1,6 +1,6 @@
 ---
 title: "R将非正态转化为正态"
-author: "韩倩云"
+author: "韩大云"
 date: "`r Sys.Date()`"
 output:
   html_document:
