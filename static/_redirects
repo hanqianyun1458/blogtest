@@ -2,3 +2,4 @@
 
 # Redirect default Netlify subdomain to primary domain
 https://hanqianyun.netlify.com/* https://www.hanqianyun.com/:splat 301!
+http://hanqianyun.netlify.com/* https://www.hanqianyun.com/:splat 301!
