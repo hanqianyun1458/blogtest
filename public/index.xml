@@ -6,7 +6,7 @@
     <description>Recent content on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 07 Jan 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 05 Jan 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
@@ -14,7 +14,7 @@
     <item>
       <title>R将非正态转化为正态</title>
       <link>/2020/01/r-blog/</link>
-      <pubDate>Tue, 07 Jan 2020 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 05 Jan 2020 00:00:00 +0000</pubDate>
       
       <guid>/2020/01/r-blog/</guid>
       <description>适用场景 在处理数据时偶尔会遇到“这组数据非正态”的问题，本文就以下关键点进行详解：
