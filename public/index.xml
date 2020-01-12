@@ -6,10 +6,39 @@
     <description>Recent content on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 05 Jan 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 12 Jan 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>优雅的分析师</title>
+      <link>/2020/01/r-blog/</link>
+      <pubDate>Sun, 12 Jan 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/2020/01/r-blog/</guid>
+      <description> 本想写个「用R语言分析我和瑞哥的聊天记录」的狗粮篇，但是中间遇到点小bug需要明天到公司解决（没带转接头），所以这个狗粮系列下周更新。
+为了保证一周一篇的输出，这次不谈有的没的，老老实实放上我在工作中总结的一些干货：
+「接到需求后 &amp;amp; 开始做需求前」的标准专业操作——动嘴动脑再动手：
+和需求方动嘴：
+ 需求背景目的
+2. 是否合理（critical thinking）
+3. 是否可由别的途径实现，比如现有报表、相关技术（疑似甩锅操作）
+4. 是否有改动or新增等建议
+5. 详细字段，字段定义
+6. 交付时点
+这几个最为关键，一定要在动手前就和需求方屡清楚。  自己动脑：
+梳理业务流程是分析工作中一个麻烦而有价值的活儿，
+分析师的痛点本身就是不如业务方熟悉业务，
+因此在接到需求后一定要理清业务流程，才能有助于后面分析工作顺利进行。
+最后一步是：和需求方互相复述一遍以上产出。
+「评估需求合理性」的注意事项：
+当业务方提需求时，分析师首先要通盘了解需求背后我们现有的资源、以及该需求的合理性，站在需求方角度给他提出意见建议；
+ 「需求交付前」的注意事项：
+对其风险做评估、以及下一步怎么做
+ 分析师的自我修养：专业度横向拓展，找到自己领域合适的人和资源了解一切。
+  </description>
+    </item>
     
     <item>
       <title>R将非正态转化为正态</title>
