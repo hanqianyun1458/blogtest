@@ -6,8 +6,8 @@
 <meta name="generator" content="Hugo 0.58.3" />
 
 
-<title>优雅的分析师 - A Hugo website</title>
-<meta property="og:title" content="优雅的分析师 - A Hugo website">
+<title>R将非正态转化为正态 - A Hugo website</title>
+<meta property="og:title" content="R将非正态转化为正态 - A Hugo website">
 
 
   <link href='/favicon.ico' rel='icon' type='image/x-icon'/>
@@ -19,6 +19,11 @@
 
 
 
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
 
 
 
@@ -57,40 +62,245 @@
 
   <article class="article">
     
-    <span class="article-duration">1 min read</span>
+    <span class="article-duration">4 min read</span>
     
 
-    <h1 class="article-title">优雅的分析师</h1>
+    <h1 class="article-title">R将非正态转化为正态</h1>
 
     
-    <span class="article-date">2020-01-12</span>
+    <span class="article-date">2020-01-05</span>
     
 
     <div class="article-content">
       
 
 
-<p>本想写个「用R语言分析我和瑞哥的聊天记录」的狗粮篇，但是中间遇到点小bug需要明天到公司解决（没带转接头），所以这个狗粮系列下周更新。<br>
-为了保证一周一篇的输出，这次不谈有的没的，老老实实放上我在工作中总结的一些干货：<br></p>
-<p><strong>1.「接到需求后 &amp; 开始做需求前」的标准专业操作——动嘴动脑再动手：</strong><br></p>
-<p><strong>和需求方动嘴：</strong><br>
-1. 需求背景目的<br>
-2. 是否合理（critical thinking）<br>
-3. 是否可由别的途径实现，比如现有报表、相关技术（疑似甩锅操作）<br>
-4. 是否有改动or新增等建议<br>
-5. 详细字段，字段定义<br>
-6. 交付时点<br></p>
-<p>这几个最为关键，一定要在「动手」前就和需求方屡清楚。</p>
-<p><strong>自己动脑：</strong><br>
-梳理业务流程是分析工作中一个麻烦而有价值的活儿，<br>
-分析师的痛点本身就是不如业务方熟悉业务，<br>
-因此在接到需求后一定要理清业务流程，才能有助于后面分析工作顺利进行。</p>
-<p><strong>最后一步是：</strong>和需求方互相复述一遍以上产出。<br></p>
-<p><strong>2.「评估需求合理性」的注意事项</strong>：<br>
-当业务方提需求时，分析师首先要通盘了解需求背后我们现有的资源、以及该需求的合理性，站在需求方角度给他提出意见建议；</p>
-<p><strong>3.「需求交付前」的注意事项</strong>：<br>
-对其风险做评估、以及下一步怎么做。<br></p>
-<p><strong>4.分析师的自我修养：专业度横向拓展，找到自己领域合适的人和资源了解一切。</strong></p>
+<div id="适用场景" class="section level1">
+<h1>适用场景</h1>
+<p>在处理数据时偶尔会遇到“这组数据非正态”的问题，本文就以下关键点进行详解：<br>
+1. 处理数据<br>
+2. 画概率密度图分析正态性<br>
+3. 将非正态转化为正态<br>
+4. 可视化散点图、回归线<br></p>
+<p>用到的包：<br>
+1. ‘carData’ R自带数据集<br>
+2. ‘ggplot2’ 可视化<br>
+3. ‘MASS’ 进行box-cox转换<br>
+4. ‘moments’ 进行偏度锋度计算<br></p>
+</div>
+<div id="实例" class="section level1">
+<h1>实例</h1>
+<div id="载入数据集" class="section level2">
+<h2>载入数据集</h2>
+<ul>
+<li>包 <code>carData</code> 中有一个叫 <code>Leinhardt</code> 的数据文件。该文件为105个国家（行数）在1970年代左右的数据。该文件共有4个变量（列数）：<code>income</code> 表示该国人均收入水平；<code>infant</code> 表示该国每1000个新生儿中的儿童死亡率；<code>region</code> 表示该国所属地区；<code>oil</code> 表示该国是否为石油输出国。</li>
+</ul>
+<pre class="r"><code>library(&#39;carData&#39;) ## 载入carData
+df1 &lt;- Leinhardt ## 载入数据集</code></pre>
+</div>
+<div id="处理缺失值" class="section level2">
+<h2>处理缺失值</h2>
+<ul>
+<li>数据中存在一些缺失值，占比不大，下面直接去掉这些缺失值。</li>
+</ul>
+<pre class="r"><code># 2. 去掉缺失值
+df1 &lt;- na.omit(df1)</code></pre>
+</div>
+<div id="概率密度图" class="section level2">
+<h2>概率密度图</h2>
+<ul>
+<li><p>先画出变量 <code>infant</code> 和变量 <code>income</code> 的概率密度图，然后分析该分布的正态性。</p>
+<p><strong>由图知，这2个变量并没服从正态分布。</strong></p></li>
+</ul>
+<pre class="r"><code># 3. 画概率密度图、分析正太性
+require(ggplot2)</code></pre>
+<pre><code>## 载入需要的程辑包：ggplot2</code></pre>
+<pre class="r"><code>ggplot(df1, aes(x = infant)) +
+  geom_line(colour = &quot;cadetblue3&quot;, stat = &quot;density&quot;) +
+  geom_rug(aes(colour = income), sides = &quot;b&quot;)</code></pre>
+<p><img src="/post/2020-01-05_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+</div>
+<div id="转化非正态为正态" class="section level2">
+<h2>转化非正态为正态</h2>
+<ul>
+<li><p>对这两列数据进行转化。</p>
+<p><strong>转化前，记income为X，infant为Y；转化后后分别为X，Ylam。</strong></p></li>
+</ul>
+<pre class="r"><code># 以下用Box-Cox方法进行正态转化
+# 准备数据集
+X &lt;- df1[,1]
+Y &lt;- df1[,2]
+data &lt;- as.data.frame(cbind(X,Y))
+lm.sol&lt;-lm(Y~X)
+
+# 1. 加载MASS包
+require(MASS) ## 基于此包进行box-cox转换</code></pre>
+<pre><code>## 载入需要的程辑包：MASS</code></pre>
+<pre class="r"><code>require(moments) ## 此包可进行偏度锋度计算</code></pre>
+<pre><code>## 载入需要的程辑包：moments</code></pre>
+<pre class="r"><code># 2. 作图, 共4张
+op &lt;- par(mfrow=c(2,2), mar=.4+c(4,4,1,1), oma= c(0,0,2,0))
+
+# 2.1 第1张, 残差与预测散点图
+plot(fitted(lm.sol), resid(lm.sol), 
+     cex=1.2, pch=21, col=&quot;red&quot;, bg=&quot;orange&quot;, 
+     xlab=&quot;Fitted Value&quot;, ylab=&quot;Residuals&quot;) ## Fitted Value拟合值，Residuals残差
+
+# 2.2 第2张, 进行Box-Cox转换，确定λ值
+b &lt;- boxcox(lm.sol, data=data)
+lambda &lt;- b$x
+lik &lt;- b$y
+bc &lt;- cbind(lambda, lik)
+bc[order(-lik),] ## 结果λ=-0.18时对数似然函数达到最大，因此λ取值-0.18</code></pre>
+<pre><code>##             lambda       lik
+##   [1,] -0.18181818 -200.9837
+##   [2,] -0.22222222 -201.0083
+##   [3,] -0.14141414 -201.1243
+##   [4,] -0.26262626 -201.1980
+##   [5,] -0.10101010 -201.4300
+##   [6,] -0.30303030 -201.5527
+##   [7,] -0.06060606 -201.9005
+##   [8,] -0.34343434 -202.0721
+##   [9,] -0.02020202 -202.5357
+##  [10,] -0.38383838 -202.7557
+##  [11,]  0.02020202 -203.3354
+##  [12,] -0.42424242 -203.6028
+##  [13,]  0.06060606 -204.2991
+##  [14,] -0.46464646 -204.6127
+##  [15,]  0.10101010 -205.4267
+##  [16,] -0.50505051 -205.7841
+##  [17,]  0.14141414 -206.7178
+##  [18,] -0.54545455 -207.1159
+##  [19,]  0.18181818 -208.1722
+##  [20,] -0.58585859 -208.6063
+##  [21,]  0.22222222 -209.7896
+##  [22,] -0.62626263 -210.2536
+##  [23,]  0.26262626 -211.5697
+##  [24,] -0.66666667 -212.0558
+##  [25,]  0.30303030 -213.5125
+##  [26,] -0.70707071 -214.0105
+##  [27,]  0.34343434 -215.6177
+##  [28,] -0.74747475 -216.1152
+##  [29,]  0.38383838 -217.8851
+##  [30,] -0.78787879 -218.3671
+##  [31,]  0.42424242 -220.3146
+##  [32,] -0.82828283 -220.7633
+##  [33,]  0.46464646 -222.9060
+##  [34,] -0.86868687 -223.3005
+##  [35,]  0.50505051 -225.6590
+##  [36,] -0.90909091 -225.9755
+##  [37,]  0.54545455 -228.5735
+##  [38,] -0.94949495 -228.7847
+##  [39,]  0.58585859 -231.6491
+##  [40,] -0.98989899 -231.7245
+##  [41,] -1.03030303 -234.7913
+##  [42,]  0.62626263 -234.8855
+##  [43,] -1.07070707 -237.9811
+##  [44,]  0.66666667 -238.2820
+##  [45,] -1.11111111 -241.2900
+##  [46,]  0.70707071 -241.8380
+##  [47,] -1.15151515 -244.7143
+##  [48,]  0.74747475 -245.5528
+##  [49,] -1.19191919 -248.2499
+##  [50,]  0.78787879 -249.4254
+##  [51,] -1.23232323 -251.8928
+##  [52,]  0.82828283 -253.4546
+##  [53,] -1.27272727 -255.6393
+##  [54,]  0.86868687 -257.6392
+##  [55,] -1.31313131 -259.4854
+##  [56,]  0.90909091 -261.9775
+##  [57,] -1.35353535 -263.4273
+##  [58,]  0.94949495 -266.4679
+##  [59,] -1.39393939 -267.4613
+##  [60,]  0.98989899 -271.1083
+##  [61,] -1.43434343 -271.5838
+##  [62,] -1.47474747 -275.7910
+##  [63,]  1.03030303 -275.8966
+##  [64,] -1.51515152 -280.0796
+##  [65,]  1.07070707 -280.8303
+##  [66,] -1.55555556 -284.4462
+##  [67,]  1.11111111 -285.9069
+##  [68,] -1.59595960 -288.8876
+##  [69,]  1.15151515 -291.1236
+##  [70,] -1.63636364 -293.4005
+##  [71,]  1.19191919 -296.4773
+##  [72,] -1.67676768 -297.9821
+##  [73,]  1.23232323 -301.9650
+##  [74,] -1.71717172 -302.6293
+##  [75,] -1.75757576 -307.3394
+##  [76,]  1.27272727 -307.5834
+##  [77,] -1.79797980 -312.1097
+##  [78,]  1.31313131 -313.3289
+##  [79,] -1.83838384 -316.9376
+##  [80,]  1.35353535 -319.1982
+##  [81,] -1.87878788 -321.8207
+##  [82,]  1.39393939 -325.1875
+##  [83,] -1.91919192 -326.7569
+##  [84,]  1.43434343 -331.2932
+##  [85,] -1.95959596 -331.7437
+##  [86,] -2.00000000 -336.7788
+##  [87,]  1.47474747 -337.5115
+##  [88,]  1.51515152 -343.8388
+##  [89,]  1.55555556 -350.2711
+##  [90,]  1.59595960 -356.8049
+##  [91,]  1.63636364 -363.4364
+##  [92,]  1.67676768 -370.1619
+##  [93,]  1.71717172 -376.9777
+##  [94,]  1.75757576 -383.8805
+##  [95,]  1.79797980 -390.8667
+##  [96,]  1.83838384 -397.9328
+##  [97,]  1.87878788 -405.0758
+##  [98,]  1.91919192 -412.2926
+##  [99,]  1.95959596 -419.5798
+## [100,]  2.00000000 -426.9345</code></pre>
+<pre class="r"><code># Box-Cox变换后, 作回归分析
+lambda&lt;- -0.18; Ylam&lt;- (Y^lambda-1)/lambda
+lm.lam&lt;-lm(Ylam~X); summary(lm.lam)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = Ylam ~ X)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.06229 -0.18702  0.02644  0.21944  1.17113 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  3.067e+00  4.334e-02  70.768  &lt; 2e-16 ***
+## X           -2.234e-04  2.467e-05  -9.056 1.25e-14 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3542 on 99 degrees of freedom
+## Multiple R-squared:  0.4531, Adjusted R-squared:  0.4476 
+## F-statistic: 82.02 on 1 and 99 DF,  p-value: 1.25e-14</code></pre>
+<pre class="r"><code># 2.3 第3张, 变换后残差与预测散点图
+plot(fitted(lm.lam), resid(lm.lam), 
+     cex=1.2, pch=21, col=&quot;red&quot;, bg=&quot;orange&quot;, 
+     xlab=&quot;Fitted Value&quot;, ylab=&quot;Residuals&quot;)
+
+# 2.4 第4张, 回归曲线和相应的散点
+beta0&lt;-lm.lam$coefficients[1]
+beta1&lt;-lm.lam$coefficients[2]
+curve((1+lambda*(beta0+beta1*x))^(1/lambda), 
+      from=min(X), to=max(X), col=&quot;blue&quot;, lwd=2, 
+      xlab=&quot;income&quot;, ylab=&quot;infant&quot;)
+points(X,Y, pch=21, cex=1.2, col=&quot;red&quot;, bg=&quot;orange&quot;)
+mtext(&quot;Box-Cox Transformations&quot;, outer = TRUE, cex=1.5)</code></pre>
+<p><img src="/post/2020-01-05_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre class="r"><code>par(op)</code></pre>
+</div>
+<div id="作散点图并添加回归线" class="section level2">
+<h2>作散点图并添加回归线</h2>
+<ul>
+<li>以转化后的新生儿死亡率为纵坐标，转化后的收入水平为横坐标，做一个散点图，并添加一条蓝色的回归直线和一条红色的非参数回归线。</li>
+</ul>
+<pre class="r"><code>plot(X,Ylam,main=&quot;Basic Scatter plot of infant vs income&quot;,xlab=&quot;income&quot;,ylab=&quot;infant&quot;,pch=19)
+abline(lm(Ylam~X),col=&quot;blue&quot;,lwd=2,lty=1)
+lines(lowess(X,Ylam),col=&quot;red&quot;,lwd=2,lty=2)</code></pre>
+<p><img src="/post/2020-01-05_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+</div>
+</div>
 
     </div>
   </article>
@@ -114,7 +324,22 @@
     </div>
     
 
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
     
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
 
     
   </body>
