@@ -2,7 +2,6 @@
 title: "长转宽格式的hive和R的2种玩法"
 author: "韩大云"
 date: "2020-02-09"
-slug: r-blog
 ---
 
 # 适用场景

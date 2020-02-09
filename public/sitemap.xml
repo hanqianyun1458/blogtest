@@ -4,12 +4,17 @@
   
   <url>
     <loc>/</loc>
-    <lastmod>2020-01-12T00:00:00+00:00</lastmod>
+    <lastmod>2020-02-09T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>/post/</loc>
-    <lastmod>2020-01-12T00:00:00+00:00</lastmod>
+    <lastmod>2020-02-09T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/2020/02/%E9%95%BF%E8%BD%AC%E5%AE%BD%E6%A0%BC%E5%BC%8F%E7%9A%84hive%E5%92%8Cr%E7%9A%842%E7%A7%8D%E7%8E%A9%E6%B3%95/</loc>
+    <lastmod>2020-02-09T00:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -35,11 +40,6 @@
   <url>
     <loc>/about/</loc>
     <lastmod>2016-05-05T21:48:51-07:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/1/01/</loc>
-    <priority>0</priority>
   </url>
   
   <url>
