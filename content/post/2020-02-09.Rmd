@@ -1,0 +1,86 @@
+---
+title: "长转宽格式的hive和R的2种玩法"
+author: "韩大云"
+date: "2020-02-09"
+---
+
+# 适用场景
+
+数据处理中经常会使用到将长格式转化为宽格式的场景，下面从hive查询和R语言处理这2种方式来实现。
+
+# 长宽格式数据
+
+举个栗子
+
+<div align=center> <img src="http://123.56.15.24:4567/uploads/longtowide.png" width = "500" height = "500" alt="图片名称" align=center>
+
+<div align=left>
+<div align=left>
+
+宽格式数据：每个变量单独成一列为宽格式数据，例如变量A,B等。
+
+长格式数据：长数据中变量的month没有单独列成一列，而是整合在同一列。
+
+# 准备数据
+
+我们在hive中把上图左边长格式数据存入表：tmp.data_long
+
+```
+CREATE EXTERNAL TABLE IF NOT EXISTS tmp.data_long (
+month string,
+type string,
+num int
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+LOCATION '/tmp/analysis/hanqianyun/data_long/'
+```
+
+# hive实现
+
+```
+sql_dat <- 
+  paste0
+  ("
+  select  
+  a.month,  
+  a.type1['A'] A, 
+  a.type1['B'] B
+  from    
+      (
+      select 
+      month,
+      str_to_map(concat_ws(',',collect_set(concat_ws(':', type, string(num))))) type1  
+      from tmp.data_long
+      group by month
+      order by month
+       ) a
+  ")
+dat <- dbGetQuery(conn(), sql_dat)
+
+    /*
+    str_to_map 字符型转换成map格式
+    concat_ws 指定分隔符将多个字符串连接起来，实现列转行
+    collect_set 集合函数
+    sort_array 排序函数
+    string 把其他类型转化为字符型
+    */
+```
+
+# R实现
+
+```
+sql_dat <- 
+  paste0("
+         select * from tmp.data_long
+         ")
+dat <- dbGetQuery(conn(), sql_dat)
+
+# 变形
+dat2 <- dcast(dat, month ~ type, value.var = "num")
+```
+
+# 总结
+
+hive一大串的函数处理，在R里只要用一行就能实现。面向对象很潇洒的样子。
