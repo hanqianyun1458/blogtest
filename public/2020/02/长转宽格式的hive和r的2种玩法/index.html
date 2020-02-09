@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.58.3" />
+
+
+<title>长转宽格式的hive和R的2种玩法 - A Hugo website</title>
+<meta property="og:title" content="长转宽格式的hive和R的2种玩法 - A Hugo website">
+
+
+  <link href='/favicon.ico' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/rstudio/blogdown">GitHub</a></li>
+    
+    <li><a href="https://twitter.com/rstudio">Twitter</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">1 min read</span>
+    
+
+    <h1 class="article-title">长转宽格式的hive和R的2种玩法</h1>
+
+    
+    <span class="article-date">2020-02-09</span>
+    
+
+    <div class="article-content">
+      
+
+
+<div id="适用场景" class="section level1">
+<h1>适用场景</h1>
+<p>数据处理中经常会使用到将长格式转化为宽格式的场景，下面从hive查询和R语言处理这2种方式来实现。</p>
+</div>
+<div id="长宽格式数据" class="section level1">
+<h1>长宽格式数据</h1>
+<p>举个栗子</p>
+<div align=center>
+<p><img src="http://123.56.15.24:4567/uploads/longtowide.png" width = "500" height = "500" alt="图片名称" align=center></p>
+<div align=left>
+<div align=left>
+
+<p>宽格式数据：每个变量单独成一列为宽格式数据，例如变量A,B等。</p>
+<p>长格式数据：长数据中变量的month没有单独列成一列，而是整合在同一列。</p>
+</div>
+<div id="准备数据" class="section level1">
+<h1>准备数据</h1>
+<p>我们在hive中把上图左边长格式数据存入表：tmp.data_long</p>
+<pre><code>CREATE EXTERNAL TABLE IF NOT EXISTS tmp.data_long (
+month string,
+type string,
+num int
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY &#39;,&#39;
+LINES TERMINATED BY &#39;\n&#39;
+LOCATION &#39;/tmp/analysis/hanqianyun/data_long/&#39;</code></pre>
+</div>
+<div id="hive实现" class="section level1">
+<h1>hive实现</h1>
+<pre><code>sql_dat &lt;- 
+  paste0
+  (&quot;
+  select  
+  a.month,  
+  a.type1[&#39;A&#39;] A, 
+  a.type1[&#39;B&#39;] B
+  from    
+      (
+      select 
+      month,
+      str_to_map(concat_ws(&#39;,&#39;,collect_set(concat_ws(&#39;:&#39;, type, string(num))))) type1  
+      from tmp.data_long
+      group by month
+      order by month
+       ) a
+  &quot;)
+dat &lt;- dbGetQuery(conn(), sql_dat)
+
+    /*
+    str_to_map 字符型转换成map格式
+    concat_ws 指定分隔符将多个字符串连接起来，实现列转行
+    collect_set 集合函数
+    sort_array 排序函数
+    string 把其他类型转化为字符型
+    */</code></pre>
+</div>
+<div id="r实现" class="section level1">
+<h1>R实现</h1>
+<pre><code>sql_dat &lt;- 
+  paste0(&quot;
+         select * from tmp.data_long
+         &quot;)
+dat &lt;- dbGetQuery(conn(), sql_dat)
+
+# 变形
+dat2 &lt;- dcast(dat, month ~ type, value.var = &quot;num&quot;)</code></pre>
+</div>
+<div id="总结" class="section level1">
+<h1>总结</h1>
+<p>hive一大串的函数处理，在R里只要用一行就能实现。面向对象很潇洒的样子。</p>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" alt="Img link to Hugo website" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+

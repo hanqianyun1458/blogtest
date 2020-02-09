@@ -6,10 +6,24 @@
     <description>Recent content on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 12 Jan 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 09 Feb 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>长转宽格式的hive和R的2种玩法</title>
+      <link>/2020/02/%E9%95%BF%E8%BD%AC%E5%AE%BD%E6%A0%BC%E5%BC%8F%E7%9A%84hive%E5%92%8Cr%E7%9A%842%E7%A7%8D%E7%8E%A9%E6%B3%95/</link>
+      <pubDate>Sun, 09 Feb 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/2020/02/%E9%95%BF%E8%BD%AC%E5%AE%BD%E6%A0%BC%E5%BC%8F%E7%9A%84hive%E5%92%8Cr%E7%9A%842%E7%A7%8D%E7%8E%A9%E6%B3%95/</guid>
+      <description>适用场景 数据处理中经常会使用到将长格式转化为宽格式的场景，下面从hive查询和R语言处理这2种方式来实现。
+ 长宽格式数据 举个栗子
+宽格式数据：每个变量单独成一列为宽格式数据，例如变量A,B等。
+长格式数据：长数据中变量的month没有单独列成一列，而是整合在同一列。
+ 准备数据 我们在hive中把上图左边长格式数据存入表：tmp.data_long
+CREATE EXTERNAL TABLE IF NOT EXISTS tmp.data_long ( month string, type string, num int ) ROW FORMAT DELIMITED FIELDS TERMINATED BY &amp;#39;,&amp;#39; LINES TERMINATED BY &amp;#39;\n&amp;#39; LOCATION &amp;#39;/tmp/analysis/hanqianyun/data_long/&amp;#39;  hive实现 sql_dat &amp;lt;- paste0 (&amp;quot; select a.month, a.type1[&amp;#39;A&amp;#39;] A, a.type1[&amp;#39;B&amp;#39;] B from ( select month, str_to_map(concat_ws(&amp;#39;,&amp;#39;,collect_set(concat_ws(&amp;#39;:&amp;#39;, type, string(num))))) type1 from tmp.data_long group by month order by month ) a &amp;quot;) dat &amp;lt;- dbGetQuery(conn(), sql_dat) /* str_to_map 字符型转换成map格式 concat_ws 指定分隔符将多个字符串连接起来，实现列转行 collect_set 集合函数 sort_array 排序函数 string 把其他类型转化为字符型 */  R实现 sql_dat &amp;lt;- paste0(&amp;quot; select * from tmp.</description>
+    </item>
     
     <item>
       <title>优雅的分析师</title>
