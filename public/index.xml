@@ -21,11 +21,11 @@
 业务和数据的关系有多种，仿佛是硬币的两面，各有各的苦逼。但是不管怎样，数据和业务首先是合作关系，然后才是服务关系（也就是业务是数据的客户）。但实际中，往往大部分是服务关系，没有合作关系，因为合作关系要靠自己赚出来。合作需要底气，别人没你不行，至少有很大影响，所以合作关系也是数据团队干出来的，不是天上掉下来的。
 在业务进行过程中，数据团队的角色之一是做一个监控者。即建立一套数据指标体系，对业务进行监测和预警。
 1. 系统性
-一个大业务部门下，可能会有多个小业务同时进行，各小业务负责人可能同时向数据部门提出各自的数据（产品）需求，如果分析师不去全面、系统的了解业务现状，就要准备不时的被各类零散需求轰炸。因此在开始思考下面的步骤前，建议先去了解大部门下的业务现状，尽可能地系统化整个部门的数据产品
+一个大业务部门下，可能会有多个小业务同时进行，各小业务负责人可能同时向数据部门提出各自的数据（产品）需求，如果分析师不去全面、系统的了解业务现状，就要准备不时的被各类零散需求轰炸。因此在开始思考下面的步骤前，建议先去了解大部门下的业务现状，尽可能地系统化整个部门的数据产品。
 2. 目标
 不仅要求我们梳理好业务流程，也要求我们明确好目标受众对象（老板看的更宏观、业务部门看得细致）。
 3. 维度：时间&amp;amp;空间
-- 指标体系不同时间段的数据现状，常见的时间周期：日/周/月/季/年，根据实际业务视角决定。 - 空间是指看数据的一些思考角度，常见的有：渠道，地域，人群身份等，不同业务会有不同的角度，一般业务部门对这块更加熟悉，所以要多向其取取经
+- 指标体系不同时间段的数据现状，常见的时间周期：日/周/月/季/年，根据实际业务视角决定； - 空间是指看数据的一些思考角度，常见的有：渠道，地域，人群身份等，不同业务会有不同的角度，一般业务部门对这块更加熟悉，所以要多向其取取经。
 4. 数据指标
 万物皆可量化。将业务问题量化为数字的变量。常见的有：数量、占比、比率等，一个好的指标通常是一个比率，因为这个比率通常可以连接分子、分母，而不是割裂来看。
 5. 标准&amp;amp;预警
@@ -33,7 +33,8 @@
 6. 反馈闭环
 数据指标体系的搭建不是一蹴而就，需要结合业务部门的实际需求不断完善，需要多与其提炼出共性的需求，与其一起建立一套可以及时反馈数据现状、洞察数据变化的指标体系，尽可能减少临时性跑数需求。
 业务和数据的关系会随着互联网的系统化、数据化的演进，有微妙的变化。因为数据会开始逐步标准化、系统化，大量脏活累活都会被干掉。但对于未来的演进，还需要业务、数据的人共同探索。
-欢迎补充。</description>
+实现2，3，4，不难，难点在于提前树立1的格局，保持5的嗅觉，养成6的习惯。
+peace~欢迎补充。</description>
     </item>
     
     <item>
@@ -144,6 +145,15 @@ CREATE EXTERNAL TABLE IF NOT EXISTS tmp.data_long ( month string, type string, n
       <guid>/about/</guid>
       <description>韩倩云的花花世界。
 vx：hqy1458</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/about/</guid>
+      <description>about /*! jQuery v1.11.3 | (c) 2005, 2015 jQuery Foundation, Inc. | jquery.org/license */ !function(a,b){&#34;object&#34;==typeof module&amp;&amp;&#34;object&#34;==typeof module.exports?module.exports=a.document?b(a,!0):function(a){if(!a.document)throw new Error(&#34;jQuery requires a window with a document&#34;);return b(a)}:b(a)}(&#34;undefined&#34;!=typeof window?window:this,function(a,b){var c=[],d=c.slice,e=c.concat,f=c.push,g=c.indexOf,h={},i=h.toString,j=h.hasOwnProperty,k={},l=&#34;1.11.3&#34;,m=function(a,b){return new m.fn.init(a,b)},n=/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,o=/^-ms-/,p=/-([\da-z])/gi,q=function(a,b){return b.toUpperCase()};m.fn=m.prototype={jquery:l,constructor:m,selector:&#34;&#34;,length:0,toArray:function(){return d.call(this)},get:function(a){return null!=a?0a?this[a+this.length]:this[a]:d.call(this)},pushStack:function(a){var b=m.merge(this.constructor(),a);return b.prevObject=this,b.context=this.context,b},each:function(a,b){return m.each(this,a,b)},map:function(a){return this.pushStack(m.map(this,function(b,c){return a.call(b,c,b)}))},slice:function(){return this.pushStack(d.apply(this,arguments))},first:function(){return this.eq(0)},last:function(){return this.eq(-1)},eq:function(a){var b=this.length,c=+a+(0a?b:0);return this.pushStack(c=0&amp;&amp;bc?[this[c]]:[])},end:function(){return this.prevObject||this.constructor(null)},push:f,sort:c.sort,splice:c.splice},m.extend=m.fn.extend=function(){var a,b,c,d,e,f,g=arguments[0]||{},h=1,i=arguments.length,j=!1;for(&#34;boolean&#34;==typeof g&amp;&amp;(j=g,g=arguments[h]||{},h++),&#34;object&#34;==typeof g||m.isFunction(g)||(g={}),h===i&amp;&amp;(g=this,h--);ih;h++)if(null!=(e=arguments[h]))for(d in e)a=g[d],c=e[d],g!==c&amp;&amp;(j&amp;&amp;c&amp;&amp;(m.isPlainObject(c)||(b=m.isArray(c)))?(b?(b=!1,f=a&amp;&amp;m.isArray(a)?a:[]):f=a&amp;&amp;m.isPlainObject(a)?a:{},g[d]=m.extend(j,f,c)):void 0!==c&amp;&amp;(g[d]=c));return g},m.extend({expando:&#34;jQuery&#34;+(l+Math.random()).replace(/\D/g,&#34;&#34;),isReady:!0,error:function(a){throw new Error(a)},noop:function(){},isFunction:function(a){return&#34;function&#34;===m.type(a)},isArray:Array.isArray||function(a){return&#34;array&#34;===m.type(a)},isWindow:function(a){return null!=a&amp;&amp;a==a.window},isNumeric:function(a){return!m.isArray(a)&amp;&amp;a-parseFloat(a)+1=0},isEmptyObject:function(a){var b;for(b in a)return!1;return!0},isPlainObject:function(a){var b;if(!a||&#34;object&#34;!==m.type(a)||a.nodeType||m.isWindow(a))return!1;try{if(a.constructor&amp;&amp;!j.call(a,&#34;constructor&#34;)&amp;&amp;!j.call(a.constructor.prototype,&#34;isPrototypeOf&#34;))return!1}catch(c){return!1}if(k.ownLast)for(b in a)return j.call(a,b);for(b in a);return void 0===b||j.call(a,b)},type:function(a){return null==a?a+&#34;&#34;:&#34;object&#34;==typeof a||&#34;function&#34;==typeof a?h[i.call(a)]||&#34;object&#34;:typeof a},globalEval:function(b){b&amp;&amp;m.</description>
     </item>
     
   </channel>
